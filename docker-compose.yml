@@ -1,0 +1,116 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: clipforge
+      POSTGRES_USER: clipforge
+      POSTGRES_PASSWORD: clipforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clipforge -d clipforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc mb -p local/clipforge || true;
+      mc anonymous set none local/clipforge || true;
+      "
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://clipforge:clipforge@postgres:5432/clipforge?schema=public
+      REDIS_URL: redis://redis:6379
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: local-dev-secret-change-me
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: clipforge
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_FORCE_PATH_STYLE: "true"
+      TRANSCRIPTION_PROVIDER: mock
+      AI_PROVIDER: mock
+      MAX_UPLOAD_BYTES: "1073741824"
+    ports:
+      - "3000:3000"
+    command: sh -c "corepack pnpm prisma:deploy && corepack pnpm prisma:seed && corepack pnpm start"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://clipforge:clipforge@postgres:5432/clipforge?schema=public
+      REDIS_URL: redis://redis:6379
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: clipforge
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_FORCE_PATH_STYLE: "true"
+      TRANSCRIPTION_PROVIDER: mock
+      AI_PROVIDER: mock
+      MAX_UPLOAD_BYTES: "1073741824"
+
+volumes:
+  postgres-data:
+  minio-data:
