@@ -25,7 +25,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # generated media/temp
-storage/
-tmp/
+/storage/
+/tmp/
 coverage/
 *.tsbuildinfo
