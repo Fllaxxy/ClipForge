@@ -5,4 +5,4 @@ corepack enable
 
 corepack pnpm prisma:deploy
 
-corepack pnpm worker
+exec corepack pnpm worker

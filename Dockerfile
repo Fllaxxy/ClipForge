@@ -4,7 +4,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates ffmpeg openssl \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable
 
@@ -21,4 +21,4 @@ FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=builder /app ./
 EXPOSE 3000
-CMD ["sh", "scripts/render-start.sh"]
+CMD ["sh", "scripts/koyeb-start.sh"]

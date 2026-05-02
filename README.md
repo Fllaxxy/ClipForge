@@ -73,11 +73,12 @@ For local Whisper, set `TRANSCRIPTION_PROVIDER=local-whisper` and configure `LOC
 ## Production Notes
 
 - Use real `NEXTAUTH_SECRET`, database credentials, Stripe keys, and S3 credentials.
-- Run the Next.js app and worker as separate services.
-- Ensure FFmpeg is compiled with libass for ASS subtitle rendering.
+- The free hosted deployment is Koyeb web only with Supabase Postgres, Upstash Redis, and Cloudflare R2.
+- The FFmpeg worker is not hosted on the free Koyeb setup. Run it locally with `corepack pnpm worker` when you want queued upload/render jobs to process.
+- Ensure FFmpeg is installed locally and compiled with libass for ASS subtitle rendering when running the worker.
 - Keep assets private and serve them through signed URL routes.
 - Configure object lifecycle rules for rendered clips and temp assets if desired.
-- For a Render-first deployment with Cloudflare R2, use `render.yaml` and follow `DEPLOYMENT.md`.
+- For the current free deployment path, follow `KOYEB_DEPLOYMENT.md`.
 
 ## Troubleshooting
 

@@ -20,7 +20,7 @@ export function absoluteUrl(path = "") {
   const base =
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXTAUTH_URL ??
-    process.env.RENDER_EXTERNAL_URL ??
+    (process.env.KOYEB_PUBLIC_DOMAIN ? `https://${process.env.KOYEB_PUBLIC_DOMAIN}` : undefined) ??
     "http://localhost:3000";
   return new URL(path, base).toString();
 }

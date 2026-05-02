@@ -16,4 +16,4 @@ FROM deps AS runner
 COPY . .
 RUN corepack pnpm prisma:generate
 ENV NODE_ENV=production
-CMD ["sh", "scripts/render-worker.sh"]
+CMD ["sh", "scripts/worker-start.sh"]
